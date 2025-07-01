@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluador de Conocimiento en IA</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a dark blue theme and responsiveness */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark charcoal blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #2d3748; /* Darker blue-gray for container */
+            border-radius: 20px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); /* Stronger dark shadow */
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: #e2e8f0; /* Light text for general content */
+        }
+        .welcome-screen, .quiz-content, .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .welcome-screen h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #90cdf4; /* Light blue for main title */
+            margin-bottom: 10px;
+        }
+        .welcome-screen p {
+            font-size: 1.3rem;
+            color: #cbd5e0; /* Lighter gray for welcome text */
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .welcome-screen .author {
+            font-size: 1rem;
+            color: #a0aec0; /* Medium gray for author text */
+            margin-top: 15px;
+        }
+        .start-button {
+            background-color: #3182ce; /* Vibrant blue for start button */
+            color: #ffffff;
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 700;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .start-button:hover {
+            background-color: #2c5282; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff; /* White for question text */
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        @media (min-width: 640px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .option-button {
+            background-color: #4a5568; /* Medium dark blue-gray for options */
+            color: #e2e8f0; /* Light gray-blue for option text */
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .option-button:hover {
+            background-color: #636b77; /* Slightly lighter dark blue-gray on hover */
+            border-color: #3182ce; /* Vibrant blue border on hover */
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            background-color: #3182ce; /* Vibrant blue for selected */
+            color: #ffffff;
+            border-color: #2c5282;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.4);
+        }
+        .option-button.correct {
+            background-color: #28a745; /* Green for correct */
+            color: #ffffff;
+            border-color: #218838;
+        }
+        .option-button.incorrect {
+            background-color: #dc3545; /* Red for incorrect */
+            color: #ffffff;
+            border-color: #c82333;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .nav-button {
+            background-color: #3182ce; /* Vibrant blue navigation buttons */
+            color: #ffffff;
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-grow: 1;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.2);
+        }
+        .nav-button:hover {
+            background-color: #2c5282;
+            transform: translateY(-2px);
+        }
+        .nav-button:disabled {
+            background-color: #4a5568; /* Darker gray for disabled */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .results-container {
+            padding: 30px;
+            background-color: #2a4365; /* Darker blue for results background */
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: #e2e8f0; /* Light text for results */
+        }
+        .results-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #90cdf4; /* Light blue for results title */
+        }
+        .results-level {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #63b3ed; /* Brighter blue for level */
+            margin-bottom: 20px;
+        }
+        .restart-button {
+            background-color: #4a5568; /* Dark gray for restart to differentiate */
+            color: #ffffff;
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 700;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .restart-button:hover {
+            background-color: #636b77;
+            transform: translateY(-2px);
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #4a5568; /* Darker background for progress bar */
+            border-radius: 10px;
+            height: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #3182ce; /* Vibrant blue progress bar */
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s ease-in-out;
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+        /* Icon for options */
+        .option-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: inline-block;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .option-button.selected .option-icon {
+            background-color: currentColor;
+        }
+
+        /* Styles for the results summary list */
+        .results-summary {
+            margin-top: 25px;
+            text-align: left;
+            width: 100%;
+            max-height: 300px; /* Limit height for scrolling */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding-right: 10px; /* Space for scrollbar */
+        }
+        .results-summary-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
+        }
+        .results-summary-item:last-child {
+            border-bottom: none;
+        }
+        .results-summary-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .results-summary-content {
+            flex-grow: 1;
+        }
+        .results-summary-question {
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for question in summary */
+            margin-bottom: 5px;
+        }
+        .results-summary-answer {
+            color: #cbd5e0; /* Lighter gray for answer text */
+            font-size: 0.95rem;
+        }
+        .correct-icon {
+            color: #28a745; /* Green for correct */
+        }
+        .incorrect-icon {
+            color: #dc3545; /* Red for incorrect */
+        }
+    </style>
+</head>
+<body>
+    <div id="quizApp" class="quiz-container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="welcome-screen">
+            <svg class="icon" style="width: 80px; height: 80px; color: #90cdf4; margin-bottom: 20px;" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+            </svg>
+            <h1>¡Bienvenido al Test de IA!</h1>
+            <p>Descubre tu nivel de conocimiento en Inteligencia Artificial con este desafiante y divertido test. ¡Atrévete a poner a prueba tus habilidades!</p>
+            <button id="startButton" class="start-button">
+                Comenzar Test
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+            <p class="author">Autor: Manuel Gómez A.</p>
+        </div>
+
+        <!-- Quiz Content (hidden initially) -->
+        <div id="quizContent" class="quiz-content hidden">
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="questionDisplay">
+                <p id="questionText" class="question-text">Cargando pregunta...</p>
+                <div id="optionsContainer" class="options-grid">
+                    <!-- Options will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <div id="navigationButtons" class="navigation-buttons">
+                <button id="prevButton" class="nav-button" disabled>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                    Anterior
+                </button>
+                <button id="nextButton" class="nav-button">
+                    Siguiente
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Screen (hidden initially) -->
+        <div id="resultsScreen" class="results-container hidden">
+            <h2 class="results-title">¡Test Completado!</h2>
+            <p class="text-xl text-gray-400 mb-2">Has acertado <span id="correctCount" class="font-bold text-white">0</span> de <span id="totalQuestions" class="font-bold text-white">0</span> preguntas.</p>
+            <p class="text-xl text-gray-400 mb-4">Tu nivel de conocimiento en IA es:</p>
+            <p id="knowledgeLevel" class="results-level">Nivel...</p>
+
+            <div id="resultsSummary" class="results-summary">
+                <!-- Summary of questions and answers will be loaded here -->
+            </div>
+
+            <button id="restartButton" class="restart-button">
+                Reiniciar Test
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Array of questions, their options, correct answer index, and difficulty level.
+        // Difficulty: 1 (Nada) to 5 (Experto)
+        const questions = [
+            {
+                question: "¿Qué significa la sigla 'IA'?",
+                options: ["Inteligencia Artificial", "Información Avanzada", "Innovación Automática", "Interacción Autónoma"],
+                correctAnswerIndex: 0,
+                difficulty: 1
+            },
+            {
+                question: "¿Cuál de los siguientes es un ejemplo común de aplicación de IA?",
+                options: ["Calculadora básica", "Horno microondas", "Asistente de voz (ej. Siri, Alexa)", "Linterna"],
+                correctAnswerIndex: 2,
+                difficulty: 1
+            },
+            {
+                question: "¿Qué campo de la IA se enfoca en que las máquinas aprendan de los datos sin ser programadas explícitamente?",
+                options: ["Robótica", "Visión por Computadora", "Procesamiento del Lenguaje Natural", "Aprendizaje Automático (Machine Learning)"],
+                correctAnswerIndex: 3,
+                difficulty: 2
+            },
+            {
+                question: "¿Cuál es el objetivo principal de la IA?",
+                options: ["Reemplazar a los humanos", "Crear máquinas que piensen y actúen como humanos", "Automatizar tareas simples", "Desarrollar robots para la industria"],
+                correctAnswerIndex: 1,
+                difficulty: 2
+            },
+            {
+                question: "¿Qué tipo de IA se especializa en una tarea específica y no tiene conciencia general (ej. un sistema de recomendación)?",
+                options: ["IA Fuerte (Strong AI)", "IA General (AGI)", "IA Débil (Weak AI) o IA Estrecha (Narrow AI)", "Superinteligencia Artificial"],
+                correctAnswerIndex: 2,
+                difficulty: 3
+            },
+            // Questions about Generative AI
+            {
+                question: "¿Qué es la IA Generativa?",
+                options: ["Un tipo de IA que solo analiza datos existentes", "Un tipo de IA que crea contenido nuevo y original (texto, imágenes, audio)", "Un sistema de IA que solo predice resultados", "Una IA diseñada para controlar robots físicos"],
+                correctAnswerIndex: 1,
+                difficulty: 3
+            },
+            {
+                question: "¿Cuál de las siguientes es una aplicación común de la IA Generativa?",
+                options: ["Clasificación de correos electrónicos como spam", "Generación de imágenes a partir de descripciones de texto", "Reconocimiento de voz en asistentes virtuales", "Detección de fraudes financieros"],
+                correctAnswerIndex: 1,
+                difficulty: 4
+            },
+            {
+                question: "En el contexto de la IA Generativa, ¿qué es un 'prompt'?",
+                options: ["Una respuesta generada por el modelo", "Un tipo de algoritmo de entrenamiento", "Una instrucción o entrada de texto que se le da al modelo para guiar la generación de contenido", "Un error en el modelo de IA"],
+                correctAnswerIndex: 2,
+                difficulty: 4
+            },
+            {
+                question: "¿Qué representa la sigla 'LLM' en IA Generativa?",
+                options: ["Large Learning Machine", "Long Language Model", "Large Language Model", "Logical Learning Module"],
+                correctAnswerIndex: 2,
+                difficulty: 4
+            },
+            {
+                question: "¿Cuál es un desafío ético común asociado con la IA Generativa?",
+                options: ["La dificultad de integrar modelos en hardware existente", "El alto costo de los recursos computacionales", "La generación de información falsa o engañosa (deepfakes, desinformación)", "La lentitud en el procesamiento de grandes volúmenes de datos"],
+                correctAnswerIndex: 2,
+                difficulty: 5
+            },
+            {
+                question: "¿Qué es un 'Transformer' y por qué es fundamental en los LLM?",
+                options: ["Un dispositivo para convertir energía eléctrica", "Una arquitectura de red neuronal que permite procesar secuencias largas de datos con atención, fundamental para entender y generar lenguaje natural", "Un tipo de base de datos optimizada para texto", "Un software para depurar modelos de IA"],
+                correctAnswerIndex: 1,
+                difficulty: 5
+            },
+            // Additional questions to reach 14
+            {
+                question: "¿Qué es la 'alucinación' en el contexto de los modelos de lenguaje grandes (LLMs)?",
+                options: ["Cuando el modelo genera texto muy creativo y original", "Cuando el modelo genera información falsa o sin sentido, presentándola como hechos", "Cuando el modelo es capaz de entender múltiples idiomas", "Cuando el modelo tiene un rendimiento muy bajo"],
+                correctAnswerIndex: 1,
+                difficulty: 4
+            },
+            {
+                question: "¿Cuál es la principal ventaja de usar la IA Generativa en el diseño gráfico?",
+                options: ["Reduce el costo de los programas de diseño", "Automatiza la creación de imágenes y elementos visuales complejos a partir de descripciones", "Mejora la resolución de imágenes existentes", "Solo permite la edición manual de diseños"],
+                correctAnswerIndex: 1,
+                difficulty: 3
+            },
+            {
+                question: "¿Qué significa 'fine-tuning' en el entrenamiento de modelos de IA Generativa?",
+                options: ["Entrenar un modelo desde cero con un conjunto de datos muy grande", "Ajustar un modelo pre-entrenado con un conjunto de datos más pequeño y específico para una tarea particular", "Reducir el tamaño de un modelo para que sea más eficiente", "Evaluar el rendimiento de un modelo sin modificarlo"],
+                correctAnswerIndex: 1,
+                difficulty: 5
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(questions.length).fill(null); // Stores the index of the selected option
+        let score = 0;
+        let correctAnswersCount = 0;
+        // Recalculate totalPossibleScore based on the updated questions array
+        let totalPossibleScore = questions.reduce((sum, q) => sum + q.difficulty, 0);
+
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const quizContent = document.getElementById('quizContent');
+        const startButton = document.getElementById('startButton');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const navigationButtons = document.getElementById('navigationButtons');
+        const resultsScreen = document.getElementById('resultsScreen');
+        const knowledgeLevel = document.getElementById('knowledgeLevel');
+        const correctCountSpan = document.getElementById('correctCount');
+        const totalQuestionsSpan = document.getElementById('totalQuestions');
+        const resultsSummaryDiv = document.getElementById('resultsSummary');
+        const restartButton = document.getElementById('restartButton');
+        const progressBar = document.getElementById('progressBar');
+
+        // Function to update the progress bar
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // Function to display the current question
+        function displayQuestion() {
+            updateProgressBar();
+            const question = questions[currentQuestionIndex];
+            questionText.textContent = question.question;
+            optionsContainer.innerHTML = ''; // Clear previous options
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.onclick = () => selectOption(index);
+
+                // Add a simple circular icon
+                const iconSpan = document.createElement('span');
+                iconSpan.classList.add('option-icon');
+                button.appendChild(iconSpan);
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = option;
+                button.appendChild(textSpan);
+
+                // If an answer was previously selected for this question, mark it
+                if (userAnswers[currentQuestionIndex] === index) {
+                    button.classList.add('selected');
+                }
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavigationButtons();
+        }
+
+        // Function to handle option selection
+        function selectOption(selectedIndex) {
+            userAnswers[currentQuestionIndex] = selectedIndex;
+            // Remove 'selected' class from all options and add to the newly selected one
+            Array.from(optionsContainer.children).forEach((button, index) => {
+                button.classList.remove('selected');
+                if (index === selectedIndex) {
+                    button.classList.add('selected');
+                }
+            });
+            updateNavigationButtons(); // Enable Next button if an option is selected
+        }
+
+        // Function to update the state of navigation buttons
+        function updateNavigationButtons() {
+            prevButton.disabled = currentQuestionIndex === 0;
+            nextButton.disabled = userAnswers[currentQuestionIndex] === null && currentQuestionIndex < questions.length - 1;
+
+            if (currentQuestionIndex === questions.length - 1) {
+                nextButton.textContent = 'Finalizar Test';
+                nextButton.innerHTML = `Finalizar Test <svg class="icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+            } else {
+                nextButton.textContent = 'Siguiente';
+                nextButton.innerHTML = `Siguiente <svg class="icon" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>`;
+            }
+        }
+
+        // Event listener for the 'Next' button
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                // If it's the last question, calculate results
+                calculateResults();
+            }
+        });
+
+        // Event listener for the 'Previous' button
+        prevButton.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        });
+
+        // Function to calculate and display results
+        function calculateResults() {
+            score = 0;
+            correctAnswersCount = 0;
+            resultsSummaryDiv.innerHTML = ''; // Clear previous summary
+
+            userAnswers.forEach((answerIndex, qIndex) => {
+                const question = questions[qIndex];
+                const isCorrect = (answerIndex !== null && answerIndex === question.correctAnswerIndex);
+
+                if (isCorrect) {
+                    score += question.difficulty;
+                    correctAnswersCount++;
+                }
+
+                // Create summary item
+                const summaryItem = document.createElement('div');
+                summaryItem.classList.add('results-summary-item');
+
+                const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                iconSvg.setAttribute("class", `results-summary-icon ${isCorrect ? 'correct-icon' : 'incorrect-icon'}`);
+                iconSvg.setAttribute("viewBox", "0 0 24 24");
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                if (isCorrect) {
+                    path.setAttribute("d", "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z");
+                } else {
+                    path.setAttribute("d", "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z");
+                }
+                iconSvg.appendChild(path);
+                summaryItem.appendChild(iconSvg);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('results-summary-content');
+
+                const questionP = document.createElement('p');
+                questionP.classList.add('results-summary-question');
+                questionP.textContent = `${qIndex + 1}. ${question.question}`;
+                contentDiv.appendChild(questionP);
+
+                const answerP = document.createElement('p');
+                answerP.classList.add('results-summary-answer');
+                answerP.textContent = `Respuesta correcta: ${question.options[question.correctAnswerIndex]}`;
+                contentDiv.appendChild(answerP);
+
+                summaryItem.appendChild(contentDiv);
+                resultsSummaryDiv.appendChild(summaryItem);
+            });
+
+            const percentage = (score / totalPossibleScore) * 100;
+            let level = "";
+
+            if (percentage <= 20) {
+                level = "Nada";
+            } else if (percentage <= 40) {
+                level = "Poco";
+            } else if (percentage <= 60) {
+                level = "Básico";
+            } else if (percentage <= 80) {
+                level = "Intermedio";
+            } else {
+                level = "Experto";
+            }
+
+            knowledgeLevel.textContent = level;
+            correctCountSpan.textContent = correctAnswersCount;
+            totalQuestionsSpan.textContent = questions.length;
+
+            quizContent.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            progressBar.style.width = '100%'; // Ensure progress bar is full at the end
+        }
+
+        // Event listener for the 'Restart Test' button
+        restartButton.addEventListener('click', () => {
+            currentQuestionIndex = 0;
+            userAnswers.fill(null);
+            score = 0;
+            correctAnswersCount = 0;
+            resultsScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden'); // Go back to welcome screen
+            updateProgressBar(); // Reset progress bar
+        });
+
+        // Event listener for the 'Start Test' button on the welcome screen
+        startButton.addEventListener('click', () => {
+            welcomeScreen.classList.add('hidden');
+            quizContent.classList.remove('hidden');
+            displayQuestion(); // Start the quiz
+        });
+
+        // Initial state: show welcome screen, hide quiz and results
+        document.addEventListener('DOMContentLoaded', () => {
+            welcomeScreen.classList.remove('hidden');
+            quizContent.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
