@@ -1,0 +1,720 @@
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Conocimiento sobre IA</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Un color de fondo suave */
+        }
+        /* Estilos personalizados para los botones de navegación y enviar */
+        .nav-button, .submit-button {
+            background-image: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover, .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .nav-button:disabled {
+            background-image: none;
+            background-color: #cbd5e1; /* Color de fondo para botones deshabilitados */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        /* Estilos para las tarjetas de preguntas */
+        .question-card {
+            background-color: #ffffff;
+            border-left: 5px solid #6a11cb; /* Borde izquierdo distintivo */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Estilos para las opciones de respuesta */
+        .option-label {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-label:hover {
+            background-color: #e2e8f0; /* Color al pasar el ratón */
+        }
+        input[type="radio"]:checked + .option-label {
+            background-color: #d1e0fc; /* Color cuando la opción está seleccionada */
+            border-color: #2575fc;
+        }
+        /* Estilos para el área de resultados */
+        .results-section {
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-top: 5px solid #2575fc; /* Borde superior distintivo */
+        }
+        /* Clase para ocultar paneles */
+        .hidden-panel {
+            display: none;
+        }
+        /* Estilos para el mensaje de error/advertencia */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444; /* Rojo para error */
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-3xl w-full bg-white p-8 rounded-xl shadow-lg mb-8">
+        <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-2">
+            Test de Conocimiento sobre IA 🧠
+        </h1>
+        <p class="text-xl font-semibold text-center text-gray-600 mb-6">
+            Por Manuel Gómez A.
+        </p>
+        <p class="text-center text-gray-600 mb-8">
+            ¡Pon a prueba tus conocimientos en Inteligencia Artificial! Responde las 15 preguntas y descubre tu nivel.
+        </p>
+
+        <form id="quizForm" class="space-y-6">
+            <!-- Contenedor para las preguntas individuales -->
+            <div id="questionsContainer">
+                <!-- Las preguntas se generarán aquí dinámicamente o se mostrarán/ocultarán -->
+                <!-- Área 1: Conceptos Básicos -->
+                <div id="panel-area1" class="mb-8 question-area">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-4 border-b-2 pb-2 border-indigo-200">
+                        Área 1: Conceptos Básicos 💡
+                    </h2>
+                    <div class="space-y-6">
+                        <!-- Pregunta 1 -->
+                        <div class="question-panel p-5 rounded-lg question-card" id="question-1">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">1. ¿Qué significa "IA"?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q1a" name="q1" value="a" class="hidden">
+                                    <label for="q1a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Inteligencia Artificial</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q1b" name="q1" value="b" class="hidden">
+                                    <label for="q1b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Información Automatizada</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q1c" name="q1" value="c" class="hidden">
+                                    <label for="q1c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Interfaz Adaptativa</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 2 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-2">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">2. Un chatbot como ChatGPT es un ejemplo de:</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q2a" name="q2" value="a" class="hidden">
+                                    <label for="q2a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) IA General (AGI)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q2b" name="q2" value="b" class="hidden">
+                                    <label for="q2b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) IA Narrow (ANI)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q2c" name="q2" value="c" class="hidden">
+                                    <label for="q2c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) IA Supervisada</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 3 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-3">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">3. ¿Cuál es la diferencia principal entre Machine Learning (ML) e IA?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q3a" name="q3" value="a" class="hidden">
+                                    <label for="q3a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) La IA solo usa reglas preprogramadas, mientras que el ML usa datos.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q3b" name="q3" value="b" class="hidden">
+                                    <label for="q3b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) El ML es un subcampo de la IA que se enfoca en aprender de datos.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q3c" name="q3" value="c" class="hidden">
+                                    <label for="q3c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) La IA requiere supervisión humana, el ML no.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 4 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-4">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">4. ¿Qué tipo de problema resuelve un modelo de "clasificación"?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q4a" name="q4" value="a" class="hidden">
+                                    <label for="q4a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Predecir valores continuos (ej: precios)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q4b" name="q4" value="b" class="hidden">
+                                    <label for="q4b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Asignar etiquetas a datos (ej: spam/no spam)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q4c" name="q4" value="c" class="hidden">
+                                    <label for="q4c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Generar texto automático</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 5 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-5">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">5. ¿Cuál de estos es un ejemplo real de IA en la vida diaria?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q5a" name="q5" value="a" class="hidden">
+                                    <label for="q5a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Una calculadora científica.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q5b" name="q5" value="b" class="hidden">
+                                    <label for="q5b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Recomendaciones de películas en Netflix.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q5c" name="q5" value="c" class="hidden">
+                                    <label for="q5c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Una lámpara inteligente que se enciende con un interruptor.</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área 2: Técnicas y Herramientas -->
+                <div id="panel-area2" class="mb-8 question-area hidden-panel">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-4 border-b-2 pb-2 border-indigo-200">
+                        Área 2: Técnicas y Herramientas 🛠️
+                    </h2>
+                    <div class="space-y-6">
+                        <!-- Pregunta 6 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-6">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">6. ¿Qué lenguaje de programación es más usado en IA?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q6a" name="q6" value="a" class="hidden">
+                                    <label for="q6a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Java</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q6b" name="q6" value="b" class="hidden">
+                                    <label for="q6b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Python</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q6c" name="q6" value="c" class="hidden">
+                                    <label for="q6c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) C++</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 7 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-7">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">7. ¿Qué biblioteca de Python se usa para redes neuronales?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q7a" name="q7" value="a" class="hidden">
+                                    <label for="q7a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Pandas</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q7b" name="q7" value="b" class="hidden">
+                                    <label for="q7b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) TensorFlow</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q7c" name="q7" value="c" class="hidden">
+                                    <label for="q7c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Matplotlib</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 8 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-8">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">8. El "aprendizaje supervisado" se define como:</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q8a" name="q8" value="a" class="hidden">
+                                    <label for="q8a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Modelos que aprenden sin datos etiquetados.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q8b" name="q8" value="b" class="hidden">
+                                    <label for="q8b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Modelos entrenados con datos etiquetados para hacer predicciones.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q8c" name="q8" value="c" class="hidden">
+                                    <label for="q8c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Modelos que imitan el comportamiento humano sin datos.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 9 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-9">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">9. ¿Qué técnica usarías para procesar lenguaje natural (NLP)?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q9a" name="q9" value="a" class="hidden">
+                                    <label for="q9a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Regresión lineal</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q9b" name="q9" value="b" class="hidden">
+                                    <label for="q9b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Redes neuronales recurrentes (RNN)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q9c" name="q9" value="c" class="hidden">
+                                    <label for="q9c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) K-means</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 10 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-10">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">10. Si un modelo tiene "alto bias", ¿está:</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q10a" name="q10" value="a" class="hidden">
+                                    <label for="q10a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Subajustado (underfitting)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q10b" name="q10" value="b" class="hidden">
+                                    <label for="q10b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Sobreajustado (overfitting)</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q10c" name="q10" value="c" class="hidden">
+                                    <label for="q10c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Balanceado</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área 3: Ética y Aplicaciones -->
+                <div id="panel-area3" class="mb-8 question-area hidden-panel">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-4 border-b-2 pb-2 border-indigo-200">
+                        Área 3: Ética y Aplicaciones ⚖️
+                    </h2>
+                    <div class="space-y-6">
+                        <!-- Pregunta 11 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-11">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">11. Un "sesgo algorítmico" ocurre cuando:</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q11a" name="q11" value="a" class="hidden">
+                                    <label for="q11a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Un modelo es demasiado lento.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q11b" name="q11" value="b" class="hidden">
+                                    <label for="q11b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Un modelo refleja prejuicios presentes en los datos de entrenamiento.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q11c" name="q11" value="c" class="hidden">
+                                    <label for="q11c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Un modelo no tiene suficiente capacidad de cómputo.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 12 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-12">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">12. ¿Por qué es importante la transparencia en IA?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q12a" name="q12" value="a" class="hidden">
+                                    <label for="q12a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Para reducir costos.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q12b" name="q12" value="b" class="hidden">
+                                    <label for="q12b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Para garantizar equidad y confianza.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q12c" name="q12" value="c" class="hidden">
+                                    <label for="q12c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Para aumentar la velocidad del modelo.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 13 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-13">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">13. Un "deepfake" es un ejemplo de:</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q13a" name="q13" value="a" class="hidden">
+                                    <label for="q13a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Uso ético de IA.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q13b" name="q13" value="b" class="hidden">
+                                    <label for="q13b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Riesgo de manipulación con IA.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q13c" name="q13" value="c" class="hidden">
+                                    <label for="q13c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Herramienta educativa.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 14 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-14">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">14. ¿Qué principio ético viola una IA que discrimina por género?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q14a" name="q14" value="a" class="hidden">
+                                    <label for="q14a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Justicia.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q14b" name="q14" value="b" class="hidden">
+                                    <label for="q14b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Privacidad.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q14c" name="q14" value="c" class="hidden">
+                                    <label for="q14c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Escalabilidad.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pregunta 15 -->
+                        <div class="question-panel p-5 rounded-lg question-card hidden-panel" id="question-15">
+                            <p class="text-lg font-semibold text-gray-800 mb-3">15. ¿Cuál es una forma de mitigar riesgos éticos en IA?</p>
+                            <div class="space-y-2">
+                                <div>
+                                    <input type="radio" id="q15a" name="q15" value="a" class="hidden">
+                                    <label for="q15a" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">a) Usar solo datos de una fuente.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q15b" name="q15" value="b" class="hidden">
+                                    <label for="q15b" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">b) Auditar modelos con datos diversos.</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="q15c" name="q15" value="c" class="hidden">
+                                    <label for="q15c" class="option-label block p-3 border border-gray-300 rounded-md text-gray-700">c) Ignorar los sesgos para ahorrar tiempo.</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button type="button" id="prevButton" class="nav-button py-3 px-6 rounded-md text-white font-bold text-lg shadow-lg" disabled>
+                    Anterior ⬅️
+                </button>
+                <button type="button" id="nextButton" class="nav-button py-3 px-6 rounded-md text-white font-bold text-lg shadow-lg">
+                    Próximo ➡️
+                </button>
+                <button type="submit" id="submitQuizButton" class="submit-button py-3 px-6 rounded-md text-white font-bold text-lg shadow-lg hidden">
+                    Enviar Respuestas ✨
+                </button>
+            </div>
+        </form>
+
+        <div id="results" class="results-section mt-10 p-6 rounded-xl hidden">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-4">Tus Resultados 📊</h2>
+            <p id="scoreDisplay" class="text-2xl text-center font-semibold text-gray-700 mb-2"></p>
+            <p id="levelDisplay" class="text-xl text-center font-semibold text-gray-700 mb-6"></p>
+
+            <div id="summary" class="space-y-4">
+                <!-- El resumen de preguntas y respuestas se insertará aquí -->
+            </div>
+
+            <button id="resetQuiz" class="submit-button w-full py-3 mt-8 rounded-md text-white font-bold text-xl shadow-lg">
+                Reiniciar Test 🔄
+            </button>
+        </div>
+    </div>
+
+    <!-- Mensaje temporal para el usuario -->
+    <div id="messageBox" class="message-box hidden"></div>
+
+    <script>
+        // Array de objetos que contiene todas las preguntas, opciones y la respuesta correcta.
+        const questions = [
+            {
+                question: "¿Qué significa 'IA'?",
+                options: { a: "Inteligencia Artificial", b: "Información Automatizada", c: "Interfaz Adaptativa" },
+                correctAnswer: "a"
+            },
+            {
+                question: "Un chatbot como ChatGPT es un ejemplo de:",
+                options: { a: "IA General (AGI)", b: "IA Narrow (ANI)", c: "IA Supervisada" },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Cuál es la diferencia principal entre Machine Learning (ML) e IA?",
+                options: { a: "La IA solo usa reglas preprogramadas, mientras que el ML usa datos.", b: "El ML es un subcampo de la IA que se enfoca en aprender de datos.", c: "La IA requiere supervisión humana, el ML no." },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué tipo de problema resuelve un modelo de 'clasificación'?",
+                options: { a: "Predecir valores continuos (ej: precios)", b: "Asignar etiquetas a datos (ej: spam/no spam)", c: "Generar texto automático" },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Cuál de estos es un ejemplo real de IA en la vida diaria?",
+                options: { a: "Una calculadora científica.", b: "Recomendaciones de películas en Netflix.", c: "Una lámpara inteligente que se enciende con un interruptor." },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué lenguaje de programación es más usado en IA?",
+                options: { a: "Java", b: "Python", c: "C++" },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué biblioteca de Python se usa para redes neuronales?",
+                options: { a: "Pandas", b: "TensorFlow", c: "Matplotlib" },
+                correctAnswer: "b"
+            },
+            {
+                question: "El 'aprendizaje supervisado' se define como:",
+                options: { a: "Modelos que aprenden sin datos etiquetados.", b: "Modelos entrenados con datos etiquetados para hacer predicciones.", c: "Modelos que imitan el comportamiento humano sin datos." },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué técnica usarías para procesar lenguaje natural (NLP)?",
+                options: { a: "Regresión lineal", b: "Redes neuronales recurrentes (RNN)", c: "K-means" },
+                correctAnswer: "b"
+            },
+            {
+                question: "Si un modelo tiene 'alto bias', ¿está:",
+                options: { a: "Subajustado (underfitting)", b: "Sobreajustado (overfitting)", c: "Balanceado" },
+                correctAnswer: "a"
+            },
+            {
+                question: "Un 'sesgo algorítmico' ocurre cuando:",
+                options: { a: "Un modelo es demasiado lento.", b: "Un modelo refleja prejuicios presentes en los datos de entrenamiento.", c: "Un modelo no tiene suficiente capacidad de cómputo." },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Por qué es importante la transparencia en IA?",
+                options: { a: "Para reducir costos.", b: "Para garantizar equidad y confianza.", c: "Para aumentar la velocidad del modelo." },
+                correctAnswer: "b"
+            },
+            {
+                question: "Un 'deepfake' es un ejemplo de:",
+                options: { a: "Uso ético de IA.", b: "Riesgo de manipulación con IA.", c: "Herramienta educativa." },
+                correctAnswer: "b"
+            },
+            {
+                question: "¿Qué principio ético viola una IA que discrimina por género?",
+                options: { a: "Justicia.", b: "Privacidad.", c: "Escalabilidad." },
+                correctAnswer: "a"
+            },
+            {
+                question: "¿Cuál es una forma de mitigar riesgos éticos en IA?",
+                options: { a: "Usar solo datos de una fuente.", b: "Auditar modelos con datos diversos.", c: "Ignorar los sesgos para ahorrar tiempo." },
+                correctAnswer: "b"
+            }
+        ];
+
+        const quizForm = document.getElementById('quizForm');
+        const resultsDiv = document.getElementById('results');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const levelDisplay = document.getElementById('levelDisplay');
+        const summaryDiv = document.getElementById('summary');
+        const resetQuizButton = document.getElementById('resetQuiz');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const submitQuizButton = document.getElementById('submitQuizButton');
+        const questionPanels = document.querySelectorAll('.question-panel');
+        const questionAreas = document.querySelectorAll('.question-area');
+        const messageBox = document.getElementById('messageBox');
+
+        let currentQuestionIndex = 0;
+
+        // Función para mostrar un mensaje temporal
+        function showMessage(message, type = 'error') {
+            messageBox.textContent = message;
+            if (type === 'error') {
+                messageBox.style.backgroundColor = '#ef4444'; // Rojo
+            } else {
+                messageBox.style.backgroundColor = '#22c55e'; // Verde (ejemplo para otros tipos de mensajes)
+            }
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000); // El mensaje desaparece después de 3 segundos
+        }
+
+        // Función para verificar si la pregunta actual ha sido respondida
+        function isCurrentQuestionAnswered() {
+            const questionName = `q${currentQuestionIndex + 1}`;
+            const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+            return selectedOption !== null;
+        }
+
+        // Función para mostrar la pregunta actual y ocultar las demás
+        function showQuestion(index) {
+            // Oculta todos los paneles de preguntas
+            questionPanels.forEach((panel, i) => {
+                panel.classList.add('hidden-panel');
+            });
+            // Oculta todas las áreas de preguntas
+            questionAreas.forEach(area => {
+                area.classList.add('hidden-panel');
+            });
+
+            // Muestra el panel de la pregunta actual
+            questionPanels[index].classList.remove('hidden-panel');
+
+            // Determina qué área de preguntas pertenece la pregunta actual y la muestra
+            const currentQuestionId = `question-${index + 1}`;
+            const currentQuestionElement = document.getElementById(currentQuestionId);
+            if (currentQuestionElement) {
+                let parentArea = currentQuestionElement.closest('.question-area');
+                if (parentArea) {
+                    parentArea.classList.remove('hidden-panel');
+                }
+            }
+
+            // Actualiza el estado de los botones de navegación
+            prevButton.disabled = (index === 0);
+            nextButton.classList.remove('hidden');
+            submitQuizButton.classList.add('hidden');
+
+            if (index === questions.length - 1) {
+                nextButton.classList.add('hidden');
+                submitQuizButton.classList.remove('hidden');
+            }
+        }
+
+        // Event listener para el botón "Anterior"
+        prevButton.addEventListener('click', function() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        });
+
+        // Event listener para el botón "Próximo"
+        nextButton.addEventListener('click', function() {
+            if (!isCurrentQuestionAnswered()) {
+                showMessage("Por favor, selecciona una opción antes de continuar.");
+                return; // Detiene la función si la pregunta no ha sido respondida
+            }
+
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            }
+        });
+
+        // Función para calcular y mostrar los resultados
+        quizForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Evita el envío del formulario por defecto
+
+            // Antes de enviar, verifica que la última pregunta también esté respondida
+            if (!isCurrentQuestionAnswered()) {
+                showMessage("Por favor, selecciona una opción en la última pregunta antes de enviar.");
+                return; // Detiene la función si la última pregunta no ha sido respondida
+            }
+
+            let score = 0;
+            const userAnswers = {}; // Almacena las respuestas del usuario
+
+            // Recorre cada pregunta para obtener la respuesta seleccionada
+            questions.forEach((q, index) => {
+                const questionName = `q${index + 1}`;
+                const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+
+                if (selectedOption) {
+                    userAnswers[questionName] = selectedOption.value;
+                    if (selectedOption.value === q.correctAnswer) {
+                        score++;
+                    }
+                } else {
+                    userAnswers[questionName] = null; // Si no se seleccionó ninguna opción
+                }
+            });
+
+            // Muestra la puntuación
+            scoreDisplay.textContent = `Tu puntuación: ${score} de ${questions.length}`;
+
+            // Determina y muestra el nivel de conocimiento
+            let level = "";
+            if (score >= 0 && score <= 5) {
+                level = "Nivel Básico 👶";
+            } else if (score >= 6 && score <= 10) {
+                level = "Nivel Intermedio 🧑‍💻";
+            } else { // 11-15 puntos
+                level = "Nivel Avanzado 🚀";
+            }
+            levelDisplay.textContent = `Nivel: ${level}`;
+
+            // Genera el resumen de preguntas y respuestas
+            summaryDiv.innerHTML = ''; // Limpia el resumen anterior
+            questions.forEach((q, index) => {
+                const questionNumber = index + 1;
+                const userAnswer = userAnswers[`q${questionNumber}`];
+                const isCorrect = (userAnswer === q.correctAnswer);
+                const icon = isCorrect ? '✅' : '❌'; // Icono de correcto/incorrecto
+
+                const correctAnswerText = `${q.correctAnswer}) ${q.options[q.correctAnswer]}`;
+                const userAnswerText = userAnswer ? `${userAnswer}) ${q.options[userAnswer]}` : 'No respondida';
+
+                const questionSummary = document.createElement('div');
+                questionSummary.classList.add('p-4', 'rounded-lg', 'border', isCorrect ? 'border-green-300' : 'border-red-300', 'bg-gray-50');
+                questionSummary.innerHTML = `
+                    <p class="font-semibold text-gray-800 mb-1">${questionNumber}. ${q.question}</p>
+                    <p class="text-sm text-gray-600 mb-1">Tu respuesta: ${userAnswerText} ${icon}</p>
+                    <p class="text-sm text-gray-600">Respuesta correcta: <span class="font-medium text-green-700">${correctAnswerText}</span></p>
+                `;
+                summaryDiv.appendChild(questionSummary);
+            });
+
+            // Oculta el formulario y muestra los resultados
+            quizForm.classList.add('hidden');
+            resultsDiv.classList.remove('hidden');
+
+            // Deshabilita los inputs para evitar cambios después de enviar
+            const radioInputs = document.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => input.disabled = true);
+        });
+
+        // Función para reiniciar el test
+        resetQuizButton.addEventListener('click', function() {
+            quizForm.reset(); // Reinicia el formulario
+            resultsDiv.classList.add('hidden'); // Oculta los resultados
+            quizForm.classList.remove('hidden'); // Muestra el formulario
+
+            // Habilita todos los inputs de nuevo
+            const radioInputs = document.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => {
+                input.disabled = false;
+                // También limpia el estilo de selección de las etiquetas
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (label) {
+                    label.classList.remove('bg-blue-100', 'border-blue-500');
+                }
+            });
+
+            // Limpia cualquier selección de radio si el navegador la mantiene
+            radioInputs.forEach(input => input.checked = false);
+
+            currentQuestionIndex = 0; // Reinicia el índice de la pregunta
+            showQuestion(currentQuestionIndex); // Muestra la primera pregunta
+        });
+
+        // Añadir evento para cambiar el estilo de la etiqueta cuando se selecciona un radio
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                // Deseleccionar todas las etiquetas hermanas en el mismo grupo de preguntas
+                const name = event.target.name;
+                document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+                    const label = document.querySelector(`label[for="${input.id}"]`);
+                    if (label) {
+                        label.classList.remove('bg-blue-100', 'border-blue-500');
+                    }
+                });
+
+                // Seleccionar la etiqueta de la opción actual
+                const label = document.querySelector(`label[for="${event.target.id}"]`);
+                if (label) {
+                    label.classList.add('bg-blue-100', 'border-blue-500');
+                }
+            });
+        });
+
+        // Inicializa el quiz mostrando la primera pregunta al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            showQuestion(currentQuestionIndex);
+        });
+
+    </script>
+</body>
+</html>
