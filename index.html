@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -11,14 +11,14 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Un color de fondo suave */
+            background-color: #e0f2fe; /* Un color de fondo azul muy suave */
         }
         /* Estilos personalizados para los botones de navegación y enviar */
-        .nav-button, .submit-button {
+        .nav-button, .submit-button, .start-button {
             background-image: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
             transition: all 0.3s ease;
         }
-        .nav-button:hover, .submit-button:hover {
+        .nav-button:hover, .submit-button:hover, .start-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
@@ -74,22 +74,48 @@
         .message-box.show {
             opacity: 1;
         }
+        /* Estilos para la barra de progreso */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e7ff; /* Fondo claro para la barra */
+            border-radius: 9999px; /* Bordes redondeados */
+            height: 12px; /* Altura de la barra */
+            overflow: hidden; /* Asegura que el progreso no se desborde */
+            margin-bottom: 24px; /* Espacio debajo de la barra */
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #1a202c; /* Azul oscuro para el progreso */
+            border-radius: 9999px; /* Bordes redondeados */
+            transition: width 0.3s ease-in-out; /* Transición suave para el cambio de ancho */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
     <div class="max-w-3xl w-full bg-white p-8 rounded-xl shadow-lg mb-8">
-        <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-2">
-            Test de Conocimiento sobre IA 🧠
-        </h1>
-        <p class="text-xl font-semibold text-center text-gray-600 mb-6">
-            Por Manuel Gómez A.
-        </p>
-        <p class="text-center text-gray-600 mb-8">
-            ¡Pon a prueba tus conocimientos en Inteligencia Artificial! Responde las 15 preguntas y descubre tu nivel.
-        </p>
+        <!-- Panel de Inicio -->
+        <div id="startPanel" class="text-center">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">
+                Test de Conocimiento sobre IA 🧠
+            </h1>
+            <p class="text-xl font-semibold text-gray-600 mb-6">
+                Por Manuel Gómez A.
+            </p>
+            <p class="text-lg text-gray-700 mb-8">
+                ¡Bienvenido a tu desafío de Inteligencia Artificial! Responde 15 preguntas para descubrir tu nivel de conocimiento.
+            </p>
+            <button id="startButton" class="start-button w-full py-3 rounded-md text-white font-bold text-xl shadow-lg">
+                Comenzar Test ▶️
+            </button>
+        </div>
 
-        <form id="quizForm" class="space-y-6">
+        <form id="quizForm" class="space-y-6 hidden-panel">
+            <!-- Barra de Progreso -->
+            <div class="progress-bar-container">
+                <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+
             <!-- Contenedor para las preguntas individuales -->
             <div id="questionsContainer">
                 <!-- Las preguntas se generarán aquí dinámicamente o se mostrarán/ocultarán -->
@@ -404,7 +430,7 @@
             </div>
         </form>
 
-        <div id="results" class="results-section mt-10 p-6 rounded-xl hidden">
+        <div id="results" class="results-section mt-10 p-6 rounded-xl hidden-panel">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-4">Tus Resultados 📊</h2>
             <p id="scoreDisplay" class="text-2xl text-center font-semibold text-gray-700 mb-2"></p>
             <p id="levelDisplay" class="text-xl text-center font-semibold text-gray-700 mb-6"></p>
@@ -420,7 +446,7 @@
     </div>
 
     <!-- Mensaje temporal para el usuario -->
-    <div id="messageBox" class="message-box hidden"></div>
+    <div id="messageBox" class="message-box hidden-panel"></div>
 
     <script>
         // Array de objetos que contiene todas las preguntas, opciones y la respuesta correcta.
@@ -514,6 +540,9 @@
         const questionPanels = document.querySelectorAll('.question-panel');
         const questionAreas = document.querySelectorAll('.question-area');
         const messageBox = document.getElementById('messageBox');
+        const startPanel = document.getElementById('startPanel');
+        const startButton = document.getElementById('startButton');
+        const progressBarFill = document.getElementById('progressBarFill'); // Nuevo elemento de la barra de progreso
 
         let currentQuestionIndex = 0;
 
@@ -536,6 +565,12 @@
             const questionName = `q${currentQuestionIndex + 1}`;
             const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
             return selectedOption !== null;
+        }
+
+        // Función para actualizar la barra de progreso
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBarFill.style.width = `${progress}%`;
         }
 
         // Función para mostrar la pregunta actual y ocultar las demás
@@ -571,7 +606,17 @@
                 nextButton.classList.add('hidden');
                 submitQuizButton.classList.remove('hidden');
             }
+
+            updateProgressBar(); // Actualiza la barra de progreso cada vez que se muestra una pregunta
         }
+
+        // Event listener para el botón "Comenzar Test"
+        startButton.addEventListener('click', function() {
+            startPanel.classList.add('hidden-panel'); // Oculta el panel de inicio
+            quizForm.classList.remove('hidden-panel'); // Muestra el formulario del quiz
+            currentQuestionIndex = 0; // Asegura que el índice de la pregunta sea 0 al iniciar
+            showQuestion(currentQuestionIndex); // Muestra la primera pregunta y actualiza la barra de progreso
+        });
 
         // Event listener para el botón "Anterior"
         prevButton.addEventListener('click', function() {
@@ -658,8 +703,8 @@
             });
 
             // Oculta el formulario y muestra los resultados
-            quizForm.classList.add('hidden');
-            resultsDiv.classList.remove('hidden');
+            quizForm.classList.add('hidden-panel');
+            resultsDiv.classList.remove('hidden-panel');
 
             // Deshabilita los inputs para evitar cambios después de enviar
             const radioInputs = document.querySelectorAll('input[type="radio"]');
@@ -669,8 +714,8 @@
         // Función para reiniciar el test
         resetQuizButton.addEventListener('click', function() {
             quizForm.reset(); // Reinicia el formulario
-            resultsDiv.classList.add('hidden'); // Oculta los resultados
-            quizForm.classList.remove('hidden'); // Muestra el formulario
+            resultsDiv.classList.add('hidden-panel'); // Oculta los resultados
+            startPanel.classList.remove('hidden-panel'); // Muestra el panel de inicio
 
             // Habilita todos los inputs de nuevo
             const radioInputs = document.querySelectorAll('input[type="radio"]');
@@ -687,7 +732,8 @@
             radioInputs.forEach(input => input.checked = false);
 
             currentQuestionIndex = 0; // Reinicia el índice de la pregunta
-            showQuestion(currentQuestionIndex); // Muestra la primera pregunta
+            progressBarFill.style.width = '0%'; // Resetea la barra de progreso
+            // No llamamos a showQuestion aquí porque el panel de inicio es el que se muestra
         });
 
         // Añadir evento para cambiar el estilo de la etiqueta cuando se selecciona un radio
@@ -710,9 +756,13 @@
             });
         });
 
-        // Inicializa el quiz mostrando la primera pregunta al cargar la página
+        // Inicializa el quiz mostrando el panel de inicio al cargar la página
         document.addEventListener('DOMContentLoaded', () => {
-            showQuestion(currentQuestionIndex);
+            // Asegura que el formulario del quiz esté oculto al inicio
+            quizForm.classList.add('hidden-panel');
+            resultsDiv.classList.add('hidden-panel');
+            messageBox.classList.add('hidden-panel'); // Asegura que el messageBox esté oculto al inicio
+            startPanel.classList.remove('hidden-panel'); // Muestra el panel de inicio
         });
 
     </script>
