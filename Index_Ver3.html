@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Generative Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #1a202c, #2d3748);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #2d3748;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 390px; /* Increased height for better content display */
+            margin: 30px auto;
+
+        }
+        .quiz-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .quiz-card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            border-radius: 10px;
+            background-color: #4a5568;
+            color: #e2e8f0;
+            box-sizing: border-box;
+            font-size: 0.9em;
+            line-height: 1.6;
+            /* Añadido para permitir el desplazamiento si el contenido excede la altura máxima */
+            max-height: 80vh; /* Altura máxima relativa al viewport */
+            overflow-y: auto; /* Habilita el desplazamiento vertical */
+            -webkit-overflow-scrolling: touch; /* Desplazamiento suave en iOS */
+        }
+        .card-front {
+            z-index: 2;
+            transform: rotateY(0deg);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #38a169; /* Green for correct answer */
+        }
+        .card-back h3 { /* Reduced font size for the "Correct Answer" title */
+            font-size: 1.8em;
+        }
+        .card-back p { /* Reduced font size for the answer and explanation text */
+            font-size: 1em; /* Reduced from 1.1em */
+            line-height: 1.5; /* Adjusted line height for better readability */
+        }
+        /* New style for question text */
+        #question-text {
+            font-size: 1.0em; /* Reduced from 1.1em or 1.2em to fit more text */
+            margin-bottom: 15px; /* Adjust margin as needed */
+            line-height: 1.5;
+        }
+        .option-button {
+            background-color: #63b3ed;
+            color: #1a202c;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 90%;
+            font-weight: 600;
+            text-align: left;
+            border: none;
+            outline: none;
+        }
+        .option-button:hover {
+            background-color: #4299e1;
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            background-color: #ecc94b; /* Yellow for selected */
+        }
+        .option-button.correct {
+            background-color: #38a169; /* Green for correct */
+            color: #e2e8f0;
+        }
+        .option-button.incorrect {
+            background-color: #e53e3e; /* Red for incorrect */
+            color: #e2e8f0;
+        }
+        .navigation-buttons button {
+            background-color: #4299e1;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 0 10px;
+            font-weight: 600;
+            border: none;
+            outline: none;
+        }
+        .navigation-buttons button:hover {
+            background-color: #3182ce;
+        }
+        .result-panel {
+            background-color: #4a5568;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .result-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #63b3ed;
+        }
+        .result-panel p {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .result-panel .percentage {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #38a169;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .question-number {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 0.9em;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold mb-6 text-blue-300">AI Generative Quiz</h1>
+
+        <div id="quiz-section">
+            <div class="card-container">
+                <div id="quiz-card" class="quiz-card">
+                    <div class="card-face card-front">
+                        <div class="question-number" id="question-number"></div>
+                        <p id="question-text" class="text-xl mb-6"></p>
+                        <div id="options-container" class="w-full flex flex-col items-center">
+                            <!-- Options will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="card-face card-back">
+                        <h3 class="text-2xl font-semibold mb-4 text-white">Correct Answer</h3>
+                        <p id="correct-answer-text" class="text-xl mb-4 text-white"></p>
+                        <p id="explanation-text" class="text-base text-white"></p>
+                    </div>
+                </div>
+            </div>
+            <button id="flip-button" class="option-button mt-4 hidden">Flip Card</button>
+            <div class="navigation-buttons mt-8">
+                <button id="prev-button" class="hidden">Previous</button>
+                <button id="next-button">Next</button>
+            </div>
+        </div>
+
+        <div id="result-section" class="result-panel hidden">
+            <h2>Quiz Results</h2>
+            <p>Correct Answers: <span id="correct-count">0</span></p>
+            <p>Incorrect Answers: <span id="incorrect-count">0</span></p>
+            <p class="percentage">Score: <span id="percentage-score">0%</span></p>
+            <button id="restart-button" class="mt-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "What is the distinctive capability of Generative Artificial Intelligence (Generative AI or Gen AI)?",
+                options: [
+                    "Pattern recognition and prediction formulation.",
+                    "Creating completely new content and ideas, including images, videos, text, and music.",
+                    "Analyzing large volumes of data for discernment of complex patterns.",
+                    "Optimizing existing designs and generating software code suggestions."
+                ],
+                answer: "Creating completely new content and ideas, including images, videos, text, and music.",
+                explanation: "Generative AI's distinctive capability is its ability to create entirely new content and ideas across various formats."
+            },
+            {
+                question: "What is the main difference between generative AI and traditional AI approaches in terms of their objective?",
+                options: [
+                    "Traditional AI focuses on creating original elements, while generative AI focuses on pattern recognition.",
+                    "Generative AI aims to create original elements, unlike traditional AI which focuses on pattern recognition and prediction formulation.",
+                    "There is no significant difference in their objectives.",
+                    "Generative AI is a subset of traditional AI with the same objectives."
+                ],
+                answer: "Generative AI aims to create original elements, unlike traditional AI which focuses on pattern recognition and prediction formulation.",
+                explanation: "Traditional AI focuses on pattern recognition and prediction, whereas generative AI's primary objective is the creation of original elements."
+            },
+            {
+                question: "What significant milestone in the evolution of generative AI occurred in 2013 and what models laid the foundation for later architectures?",
+                options: [
+                    "The introduction of Transformers, laying the foundation for GANs.",
+                    "The development of Variational Autoencoders (VAEs), laying the foundation for GANs and diffusion models.",
+                    "The introduction of Generative Adversarial Networks (GANs) by Ian Goodfellow.",
+                    "The emergence of Diffusion Models for high-quality image generation."
+                ],
+                answer: "The development of Variational Autoencoders (VAEs), laying the foundation for GANs and diffusion models.",
+                explanation: "The development of VAEs in 2013 was a significant milestone, paving the way for other influential architectures like GANs and diffusion models."
+            },
+            {
+                question: "What innovative architecture, integrating an encoder-decoder with an attention mechanism, transformed natural language processing (NLP) in 2017?",
+                options: [
+                    "Variational Autoencoders (VAEs)",
+                    "Generative Adversarial Networks (GANs)",
+                    "Transformers",
+                    "Diffusion Models"
+                ],
+                answer: "Transformers",
+                explanation: "The introduction of Transformers in 2017, with their encoder-decoder and attention mechanism, revolutionized NLP."
+            },
+            {
+                question: "Mention one of the fundamental principles of generative AI related to learning.",
+                options: [
+                    "Supervised learning for data classification.",
+                    "Reinforcement learning for decision-making.",
+                    "Pattern learning, where generative AI analyzes large volumes of data to discern complex patterns and generate innovative results.",
+                    "Unsupervised learning for anomaly detection."
+                ],
+                answer: "Pattern learning, where generative AI analyzes large volumes of data to discern complex patterns and generate innovative results.",
+                explanation: "Pattern learning is a core principle, as generative AI models analyze vast datasets to identify complex patterns and produce novel outputs."
+            },
+            {
+                question: "What characterizes generative AI's ability to create synthetic data?",
+                options: [
+                    "Its ability to analyze existing data for insights.",
+                    "Its ability to create data that did not exist previously, which can be used for a multitude of purposes.",
+                    "Its ability to classify data into predefined categories.",
+                    "Its ability to predict future data trends."
+                ],
+                answer: "Its ability to create data that did not exist previously, which can be used for a multitude of purposes.",
+                explanation: "A distinctive characteristic of generative AI is its capacity to create synthetic data that did not exist before, usable for various purposes."
+            },
+            {
+                question: "What are Foundational Models (FMs) in generative AI and what is their functioning based on?",
+                options: [
+                    "Small-scale models trained on specific, labeled datasets.",
+                    "Large-scale machine learning models, pre-trained on a vast spectrum of generalized and unlabeled data, functioning by predicting the next element in a sequence (for text) or creating a sharper version (for images).",
+                    "Models focused solely on image generation.",
+                    "Models primarily used for data classification."
+                ],
+                answer: "Large-scale machine learning models, pre-trained on a vast spectrum of generalized and unlabeled data, functioning by predicting the next element in a sequence (for text) or creating a sharper version (for images).",
+                explanation: "Foundational Models are large-scale, pre-trained models on vast unlabeled datasets, predicting the next element in a sequence (text) or creating sharper versions (images)."
+            },
+            {
+                question: "What are Large Language Models (LLMs) and what type of tasks do they primarily address?",
+                options: [
+                    "A class of FMs focused on image generation.",
+                    "A class of FMs that concentrate on language-based tasks, including summarization, text generation, classification, and open conversation.",
+                    "Models specialized in numerical data analysis.",
+                    "Models used for robotic control."
+                ],
+                answer: "A class of FMs that concentrate on language-based tasks, including summarization, text generation, classification, and open conversation.",
+                explanation: "LLMs are a specific class of FMs primarily addressing language-based tasks like summarization, text generation, classification, and open conversation."
+            },
+            {
+                question: "According to the source, what is the apparent contradiction in the definition of generative AI's creativity?",
+                options: [
+                    "It can only create repetitive content.",
+                    "It can create something completely new and expand creativity, but its creativity is limited by the training data, potentially producing repetitive or derivative results.",
+                    "It is not creative at all.",
+                    "Its creativity is only limited by computational resources."
+                ],
+                answer: "It can create something completely new and expand creativity, but its creativity is limited by the training data, potentially producing repetitive or derivative results.",
+                explanation: "The contradiction lies in generative AI's ability to create new content while being limited by its training data, which can lead to repetitive or derivative outputs."
+            },
+            {
+                question: "What type of models are Variational Autoencoders (VAEs) and what kind of compact data representation do they learn?",
+                options: [
+                    "Discriminative models that learn to classify data.",
+                    "Generative deep models that operate by learning a compact representation of data, known as latent space.",
+                    "Models that only generate images.",
+                    "Models that learn explicit rules for data generation."
+                ],
+                answer: "Generative deep models that operate by learning a compact representation of data, known as latent space.",
+                explanation: "VAEs are generative deep models that learn a compact data representation called latent space."
+            },
+            {
+                question: "Mention the two main components of a VAE's architecture.",
+                options: [
+                    "Generator and Discriminator",
+                    "Encoder and Decoder",
+                    "Input layer and Output layer",
+                    "Attention mechanism and Feed-forward network"
+                ],
+                answer: "Encoder and Decoder",
+                explanation: "The architecture of a VAE consists of an encoder and a decoder."
+            },
+            {
+                question: "What does the encoder of a VAE produce when mapping input data to the latent space?",
+                options: [
+                    "The final generated output.",
+                    "The mean and logarithmic variance of the distribution within that latent space.",
+                    "A classification label.",
+                    "A reconstructed version of the input."
+                ],
+                answer: "The mean and logarithmic variance of the distribution within that latent space.",
+                explanation: "The VAE encoder produces the mean and logarithmic variance of the distribution within the latent space."
+            },
+            {
+                question: "What does the ability to sample from the latent space in a VAE allow?",
+                options: [
+                    "Data classification.",
+                    "Faster training of the model.",
+                    "The generation of new data instances.",
+                    "Improved accuracy in predictions."
+                ],
+                answer: "The generation of new data instances.",
+                explanation: "Sampling from the latent space in a VAE enables the generation of new data instances."
+            },
+            {
+                question: "What two crucial elements does the loss function of VAEs combine for optimization?",
+                options: [
+                    "Accuracy loss and precision loss.",
+                    "Reconstruction loss and Kullback-Leibler (KL) divergence loss.",
+                    "Generative loss and discriminative loss.",
+                    "Encoder loss and decoder loss."
+                ],
+                answer: "Reconstruction loss and Kullback-Leibler (KL) divergence loss.",
+                explanation: "The VAE loss function combines reconstruction loss and Kullback-Leibler (KL) divergence loss for optimization."
+            },
+            {
+                question: "What key weakness do samples generated by VAEs have compared to other models like GANs?",
+                options: [
+                    "They are more realistic.",
+                    "They are faster to generate.",
+                    "They can be less sharp or realistic.",
+                    "They require less computational power."
+                ],
+                answer: "They can be less sharp or realistic.",
+                explanation: "VAEs can produce samples that are less sharp or realistic compared to models like GANs."
+            },
+            {
+                question: "Who introduced Generative Adversarial Networks (GANs) and in what year?",
+                options: [
+                    "Geoffrey Hinton in 2012.",
+                    "Ian Goodfellow in 2014.",
+                    "Yann LeCun in 2015.",
+                    "Andrew Ng in 2016."
+                ],
+                answer: "Ian Goodfellow in 2014.",
+                explanation: "GANs were introduced by Ian Goodfellow in 2014."
+            },
+            {
+                question: "Mention the two components of a GAN's architecture.",
+                options: [
+                    "Encoder and Decoder",
+                    "Generator and Discriminator",
+                    "Input layer and Output layer",
+                    "Feature extractor and Classifier"
+                ],
+                answer: "Generator and Discriminator",
+                explanation: "A GAN's architecture is composed of a Generator (G) and a Discriminator (D)."
+            },
+            {
+                question: "What is the primary objective of the Generator in a GAN?",
+                options: [
+                    "To classify real and fake data.",
+                    "To distinguish between real and fake data.",
+                    "To generate data so convincing that the discriminator cannot distinguish it from real data.",
+                    "To optimize the discriminator's performance."
+                ],
+                answer: "To generate data so convincing that the discriminator cannot distinguish it from real data.",
+                explanation: "The Generator's primary objective in a GAN is to produce data that the discriminator cannot differentiate from real data."
+            },
+            {
+                question: "What is the task of the Discriminator in a GAN?",
+                options: [
+                    "To generate new data instances.",
+                    "To distinguish between real and fake data, evaluating the authenticity of the data produced by the generator.",
+                    "To learn the latent space representation.",
+                    "To reconstruct input data."
+                ],
+                answer: "To distinguish between real and fake data, evaluating the authenticity of the data produced by the generator.",
+                explanation: "The Discriminator's task in a GAN is to differentiate between real and fake data, assessing the authenticity of the generator's output."
+            },
+            {
+                question: "How do GANs operate for training, describing the type of game?",
+                options: [
+                    "Based on a collaborative game where both components work together.",
+                    "Based on a process of training that resembles a zero-sum game (min-max).",
+                    "Based on a supervised learning approach.",
+                    "Based on an unsupervised clustering algorithm."
+                ],
+                answer: "Based on a process of training that resembles a zero-sum game (min-max).",
+                explanation: "GANs operate based on a training process that resembles a zero-sum game (min-max)."
+            },
+            {
+                question: "Mention at least two diverse and notable applications of GANs, especially in realistic media generation.",
+                options: [
+                    "Text summarization and language translation.",
+                    "Image synthesis, video generation, 3D model creation, and synthetic data production.",
+                    "Numerical data analysis and predictive modeling.",
+                    "Robotics control and autonomous navigation."
+                ],
+                answer: "Image synthesis, video generation, 3D model creation, and synthetic data production.",
+                explanation: "Notable applications of GANs include image synthesis, video generation, 3D model creation, and synthetic data production, especially in realistic media generation."
+            },
+            {
+                question: "What is a significant weakness of GANs regarding their training and a common problem they exhibit?",
+                options: [
+                    "Ease of training and lack of mode collapse.",
+                    "Difficulty of training (instability) and mode collapse.",
+                    "High computational efficiency.",
+                    "Limited application areas."
+                ],
+                answer: "Difficulty of training (instability) and mode collapse.",
+                explanation: "A significant weakness of GANs is training difficulty (instability) and mode collapse."
+            },
+            {
+                question: "What is the central mechanism of Transformers that allows them to analyze relationships between elements in a sequence, regardless of their position?",
+                options: [
+                    "Recurrent connections.",
+                    "Convolutional filters.",
+                    "Self-attention mechanism.",
+                    "Pooling layers."
+                ],
+                answer: "Self-attention mechanism.",
+                explanation: "The central mechanism of Transformers is the self-attention mechanism, enabling them to analyze relationships between sequence elements regardless of position."
+            },
+            {
+                question: "What does the Transformer architecture incorporate to preserve the sequential order of input words?",
+                options: [
+                    "Recurrent layers.",
+                    "Positional encoding.",
+                    "Gating mechanisms.",
+                    "Skip connections."
+                ],
+                answer: "Positional encoding.",
+                explanation: "Transformers incorporate positional encoding to preserve the sequential order of input words."
+            },
+            {
+                question: "What is one of the main advantages of the Transformer architecture regarding its training, unlike recurrent models?",
+                options: [
+                    "It requires less data.",
+                    "It facilitates faster training through parallel processing.",
+                    "It is simpler to implement.",
+                    "It has lower computational complexity."
+                ],
+                answer: "It facilitates faster training through parallel processing.",
+                explanation: "A major advantage of Transformers is faster training through parallel processing, unlike recurrent models."
+            },
+            {
+                question: "Mention at least three revolutionary applications of Transformers in the field of Natural Language Processing (NLP).",
+                options: [
+                    "Image recognition, object detection, and speech synthesis.",
+                    "Machine translation, text summarization, language modeling, and sentiment analysis.",
+                    "Financial forecasting, stock market prediction, and fraud detection.",
+                    "Robotics control, autonomous driving, and game AI."
+                ],
+                answer: "Machine translation, text summarization, language modeling, and sentiment analysis.",
+                explanation: "Revolutionary NLP applications of Transformers include machine translation, text summarization, language modeling, and sentiment analysis."
+            },
+            {
+                question: "What type of computational complexity do Transformers present in relation to input length, making them more expensive than GANs?",
+                options: [
+                    "Linear complexity.",
+                    "Logarithmic complexity.",
+                    "Quadratic complexity of their self-attention mechanism in relation to input length.",
+                    "Constant complexity."
+                ],
+                answer: "Quadratic complexity of their self-attention mechanism in relation to input length.",
+                explanation: "Transformers have quadratic computational complexity due to their self-attention mechanism's relation to input length, making them more expensive than GANs."
+            },
+            {
+                question: "How have Diffusion Models emerged in generative AI and for what type of content do they allow creation?",
+                options: [
+                    "As a method for data compression, allowing creation of smaller files.",
+                    "As a revolutionary force in generative AI, allowing the creation of high-quality images, videos, and audio.",
+                    "As a tool for data classification, allowing creation of accurate labels.",
+                    "As a technique for optimizing neural network weights, allowing creation of more efficient models."
+                ],
+                answer: "As a revolutionary force in generative AI, allowing the creation of high-quality images, videos, and audio.",
+                explanation: "Diffusion Models have emerged as a revolutionary force in generative AI, enabling the creation of high-quality images, videos, and audio."
+            },
+            {
+                question: "Briefly describe the Forward Diffusion Process (Corruption) in diffusion models.",
+                options: [
+                    "It involves removing noise from data to reveal the original sample.",
+                    "It involves the incremental addition of Gaussian noise to input data over a series of successive steps, aiming for the original sample to gradually lose its distinctive attributes.",
+                    "It involves transforming data into a latent space representation.",
+                    "It involves generating new data from a random seed."
+                ],
+                answer: "It involves the incremental addition of Gaussian noise to input data over a series of successive steps, aiming for the original sample to gradually lose its distinctive attributes.",
+                explanation: "The Forward Diffusion Process involves incrementally adding Gaussian noise to input data over successive steps, causing the original sample to lose its distinctive attributes."
+            },
+            {
+                question: "How is reconstruction achieved in the Reverse Diffusion Process of diffusion models?",
+                options: [
+                    "By directly sampling from the latent space.",
+                    "By training a neural network to reverse each of the corruption steps applied in the forward process, allowing a new image to be generated from random Gaussian noise.",
+                    "By applying a simple inverse transformation.",
+                    "By using a pre-trained encoder."
+                ],
+                answer: "By training a neural network to reverse each of the corruption steps applied in the forward process, allowing a new image to be generated from random Gaussian noise.",
+                explanation: "Reconstruction in the Reverse Diffusion Process is achieved by training a neural network to reverse the corruption steps from the forward process, generating a new image from random Gaussian noise."
+            },
+            {
+                question: "What common problem in older generative models, such as GANs, have Diffusion Models effectively addressed?",
+                options: [
+                    "Difficulty in generating diverse samples.",
+                    "High computational cost.",
+                    "Problems like mode collapse that often affected GANs.",
+                    "Lack of realism in generated outputs."
+                ],
+                answer: "Problems like mode collapse that often affected GANs.",
+                explanation: "Diffusion Models have successfully addressed issues like mode collapse, which commonly affected older generative models like GANs."
+            },
+            {
+                question: "What is a significant weakness of Diffusion Models regarding inference and computational cost for training?",
+                options: [
+                    "They are fast in inference and have low training cost.",
+                    "They are slow in inference (require many steps) and have a high computational cost for training.",
+                    "They cannot generate high-quality content.",
+                    "They are prone to generating repetitive outputs."
+                ],
+                answer: "They are slow in inference (require many steps) and have a high computational cost for training.",
+                explanation: "Diffusion Models are slow during inference (requiring many steps) and incur a high computational cost for training."
+            },
+            {
+                question: "What do hybrid approaches, such as 'GANsformers,' seek?",
+                options: [
+                    "To simplify the architecture of generative models.",
+                    "To combine the strengths of GANs and Transformers to improve content generation, leveraging the realism of GANs and the contextual coherence of Transformers.",
+                    "To reduce the computational resources required for training.",
+                    "To focus solely on text generation."
+                ],
+                answer: "To combine the strengths of GANs and Transformers to improve content generation, leveraging the realism of GANs and the contextual coherence of Transformers.",
+                explanation: "'GANsformers' aim to combine the strengths of GANs and Transformers to enhance content generation, utilizing GANs' realism and Transformers' contextual coherence."
+            },
+            {
+                question: "What drives generative AI in all areas, allowing 'to do more with fewer resources'?",
+                options: [
+                    "Increased human labor.",
+                    "Stricter regulations.",
+                    "Innovation in all areas.",
+                    "Reduced data availability."
+                ],
+                answer: "Innovation in all areas.",
+                explanation: "Generative AI drives innovation across all sectors, enabling more to be done with fewer resources."
+            },
+            {
+                question: "How does generative AI contribute to accelerating research, for example, in the pharmaceutical industry?",
+                options: [
+                    "By limiting data analysis.",
+                    "By hindering the discovery of new trends.",
+                    "By exploring and analyzing complex data in novel ways, facilitating the discovery of new trends and patterns, and accelerating new drug discovery by generating and optimizing protein sequences.",
+                    "By increasing the time required for research."
+                ],
+                answer: "By exploring and analyzing complex data in novel ways, facilitating the discovery of new trends and patterns, and accelerating new drug discovery by generating and optimizing protein sequences.",
+                explanation: "Generative AI algorithms explore and analyze complex data in novel ways, facilitating new trend discovery and accelerating drug discovery by generating and optimizing protein sequences."
+            },
+            {
+                question: "Mention at least two ways generative AI can improve labor productivity in various sectors.",
+                options: [
+                    "By replacing all human jobs.",
+                    "By supporting creative tasks through prototype generation, optimizing existing designs, generating software code suggestions, and assisting in administration by creating reports and summaries.",
+                    "By increasing manual labor.",
+                    "By reducing automation."
+                ],
+                answer: "By supporting creative tasks through prototype generation, optimizing existing designs, generating software code suggestions, and assisting in administration by creating reports and summaries.",
+                explanation: "Generative AI can improve labor productivity by supporting creative tasks (prototypes, design optimization), generating code suggestions, and assisting administration (reports, summaries)."
+            },
+            {
+                question: "According to Goldman Sachs, what potential economic impact could generative AI drive in global GDP?",
+                options: [
+                    "A decrease of 5%.",
+                    "An increase of 7% (equivalent to nearly 7 trillion USD) of global Gross Domestic Product (GDP).",
+                    "No significant impact.",
+                    "A stagnation of economic growth."
+                ],
+                answer: "An increase of 7% (equivalent to nearly 7 trillion USD) of global Gross Domestic Product (GDP).",
+                explanation: "Goldman Sachs estimates generative AI could boost global GDP by 7% (nearly 7 trillion USD)."
+            },
+            {
+                question: "Mention a prominent social risk of AI if not managed properly, especially in developing countries.",
+                options: [
+                    "Increased job creation.",
+                    "Improved social equality.",
+                    "The potential deepening of digital and social divides, and concern about significant job loss if the workforce does not acquire necessary digital skills.",
+                    "Enhanced privacy and security."
+                ],
+                answer: "The potential deepening of digital and social divides, and concern about significant job loss if the workforce does not acquire necessary digital skills.",
+                explanation: "A prominent social risk of unmanaged AI, especially in developing countries, is the potential deepening of digital and social divides and significant job loss if the workforce lacks necessary digital skills."
+            },
+            {
+                question: "How does generative AI transform customer experience (CX)?",
+                options: [
+                    "By making customer interactions more generic.",
+                    "By limiting chatbot capabilities.",
+                    "By facilitating the creation of more personalized experiences, from chatbots that generate natural and empathetic responses to highly accurate product recommendation systems, strengthening customer relationships.",
+                    "By increasing customer wait times."
+                ],
+                answer: "By facilitating the creation of more personalized experiences, from chatbots that generate natural and empathetic responses to highly accurate product recommendation systems, strengthening customer relationships.",
+                explanation: "Generative AI transforms CX by enabling more personalized experiences, from natural chatbots to accurate recommendation systems, strengthening customer relationships."
+            },
+            {
+                question: "What important strategy does Dell Technologies emphasize to accelerate GenAI adoption?",
+                options: [
+                    "Reducing investment in GenAI.",
+                    "Focusing solely on hardware development.",
+                    "Partnering with NVIDIA to offer co-enabled GenAI training and certification, considered a 'critical milestone' for organizations to accelerate adoption.",
+                    "Limiting access to GenAI technologies."
+                ],
+                answer: "Partnering with NVIDIA to offer co-enabled GenAI training and certification, considered a 'critical milestone' for organizations to accelerate adoption.",
+                explanation: "Dell Technologies emphasizes partnering with NVIDIA for co-enabled GenAI training and certification to accelerate adoption."
+            },
+            {
+                question: "Mention a prominent application of generative AI in software development.",
+                options: [
+                    "Manual code debugging.",
+                    "Code generation by generative AI, used to write, update, and maintain code, automate debugging, and assist in application testing.",
+                    "Traditional software project management.",
+                    "Creating static software documentation."
+                ],
+                answer: "Code generation by generative AI, used to write, update, and maintain code, automate debugging, and assist in application testing.",
+                explanation: "A prominent application of generative AI in software development is code generation, used for writing, updating, maintaining, debugging, and testing code."
+            },
+            {
+                question: "What type of assistants are a key priority for CEOs in customer service, according to the source?",
+                options: [
+                    "Human-only customer service representatives.",
+                    "Automated phone systems without AI.",
+                    "Chatbots and virtual agents powered by AI.",
+                    "Email-only support."
+                ],
+                answer: "Chatbots and virtual agents powered by AI.",
+                explanation: "Chatbots and AI-powered virtual agents are a key priority for CEOs in customer service."
+            },
+            {
+                question: "What real-world example is mentioned about the use of a GenAI digital assistant to serve non-English speaking populations?",
+                options: [
+                    "A company that only provides English support.",
+                    "The City of Amarillo developed 'Emma,' a GenAI digital assistant to serve its non-English speaking population, allowing access to information in their native languages.",
+                    "A website that uses Google Translate for all content.",
+                    "A call center that only hires bilingual agents."
+                ],
+                answer: "The City of Amarillo developed 'Emma,' a GenAI digital assistant to serve its non-English speaking population, allowing access to information in their native languages.",
+                explanation: "The City of Amarillo developed 'Emma,' a GenAI digital assistant, to provide information in native languages to its non-English speaking population."
+            },
+            {
+                question: "How does generative AI contribute to fraud detection in the financial sector?",
+                options: [
+                    "By manually reviewing transactions.",
+                    "By limiting data access.",
+                    "By quickly scanning and summarizing large volumes of data to identify patterns or anomalies, helping prevent cyber threats and fraudulent transactions, improving security and regulatory compliance.",
+                    "By only focusing on small transactions."
+                ],
+                answer: "By quickly scanning and summarizing large volumes of data to identify patterns or anomalies, helping prevent cyber threats and fraudulent transactions, improving security and regulatory compliance.",
+                explanation: "Generative AI aids fraud detection by rapidly scanning and summarizing large data volumes to identify patterns/anomalies, preventing cyber threats and fraudulent transactions, and enhancing security/compliance."
+            },
+            {
+                question: "What key role does generative AI play in drug discovery?",
+                options: [
+                    "It slows down the drug development process.",
+                    "It is limited to analyzing existing drugs.",
+                    "Generative AI models are capable of modeling molecular structures, predicting the efficacy of new compounds, and accelerating the development of novel treatments.",
+                    "It only focuses on drug distribution."
+                ],
+                answer: "Generative AI models are capable of modeling molecular structures, predicting the efficacy of new compounds, and accelerating the development of novel treatments.",
+                explanation: "Generative AI models play a key role in drug discovery by modeling molecular structures, predicting new compound efficacy, and accelerating novel treatment development."
+            },
+            {
+                question: "How does generative AI help in marketing, especially concerning adapting brand tone?",
+                options: [
+                    "By creating generic marketing campaigns.",
+                    "By limiting content generation.",
+                    "It enables hyper-personalized marketing, and personalized language generators can be trained with an organization's specific tone and voice so that generated content precisely matches previous material.",
+                    "By making all marketing content sound the same."
+                ],
+                answer: "It enables hyper-personalized marketing, and personalized language generators can be trained with an organization's specific tone and voice so that generated content precisely matches previous material.",
+                explanation: "Generative AI enables hyper-personalized marketing by training language generators with an organization's specific tone and voice, ensuring generated content matches previous material."
+            },
+            {
+                question: "What important concern do generative AI tools raise regarding information privacy and security?",
+                options: [
+                    "They enhance data privacy automatically.",
+                    "They have no impact on data security.",
+                    "The use of proprietary data for personalizing generative AI models raises inherent concerns about information privacy and security, requiring tools to be designed to limit unauthorized access to private data and ensure its confidentiality.",
+                    "They simplify data sharing without concerns."
+                ],
+                answer: "The use of proprietary data for personalizing generative AI models raises inherent concerns about information privacy and security, requiring tools to be designed to limit unauthorized access to private data and ensure its confidentiality.",
+                explanation: "Generative AI tools raise privacy and security concerns due to proprietary data use for personalization, necessitating designs that limit unauthorized access and ensure confidentiality."
+            },
+            {
+                question: "What does it mean that generative AI models are often considered 'black boxes' in terms of explainability?",
+                options: [
+                    "They are easy to understand and interpret.",
+                    "It means their complex and opaque nature makes it difficult to understand how they arrive at specific results, which is a challenge for fostering trust and widespread adoption of the technology.",
+                    "They only work with simple data.",
+                    "They provide clear and concise explanations for all their outputs."
+                ],
+                answer: "It means their complex and opaque nature makes it difficult to understand how they arrive at specific results, which is a challenge for fostering trust and widespread adoption of the technology.",
+                explanation: "Generative AI models are 'black boxes' because their complex nature makes it hard to understand how they reach specific results, posing a challenge for trust and adoption."
+            },
+            {
+                question: "What is one of the key challenges in implementing generative AI in terms of resources and infrastructure?",
+                options: [
+                    "It requires minimal computational resources.",
+                    "The training and execution of generative AI models require significant computational resources, and their integration demands robust technological infrastructure and properly trained personnel, facing particular challenges in computing infrastructure and bandwidth.",
+                    "It can be implemented with basic hardware.",
+                    "It does not require specialized personnel."
+                ],
+                answer: "The training and execution of generative AI models require significant computational resources, and their integration demands robust technological infrastructure and properly trained personnel, facing particular challenges in computing infrastructure and bandwidth.",
+                explanation: "Implementing generative AI is challenging due to the significant computational resources, robust infrastructure, and trained personnel required for training and execution, especially concerning computing infrastructure and bandwidth."
+            },
+            {
+                question: "What growing environmental concern is associated with AI's energy consumption?",
+                options: [
+                    "It has no environmental impact.",
+                    "The energy consumption associated with AI is a growing concern, as it requires high-performance computers that process large volumes of data, and the megawatt-hour consumption of large AI companies can be comparable to that of entire countries.",
+                    "It reduces overall energy consumption.",
+                    "It only consumes energy during training."
+                ],
+                answer: "The energy consumption associated with AI is a growing concern, as it requires high-performance computers that process large volumes of data, and the megawatt-hour consumption of large AI companies can be comparable to that of entire countries.",
+                explanation: "AI's energy consumption is a growing environmental concern; high-performance computers processing large data volumes can lead to megawatt-hour consumption comparable to entire countries for large AI companies."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let correctAnswersCount = 0;
+        let incorrectAnswersCount = 0;
+        let userAnswers = new Array(quizData.length).fill(null); // To store user's selected option index
+
+        const quizSection = document.getElementById('quiz-section');
+        const resultSection = document.getElementById('result-section');
+        const questionNumberElem = document.getElementById('question-number');
+        const questionTextElem = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const quizCard = document.getElementById('quiz-card');
+        const correctAnswerTextElem = document.getElementById('correct-answer-text');
+        const explanationTextElem = document.getElementById('explanation-text');
+        const flipButton = document.getElementById('flip-button');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const correctCountElem = document.getElementById('correct-count');
+        const incorrectCountElem = document.getElementById('incorrect-count');
+        const percentageScoreElem = document.getElementById('percentage-score');
+        const restartButton = document.getElementById('restart-button');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Shuffle options for each question
+        quizData.forEach(q => {
+            shuffleArray(q.options);
+        });
+
+        function loadQuestion() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionNumberElem.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+            questionTextElem.textContent = currentQuestion.question;
+            optionsContainer.innerHTML = '';
+            quizCard.classList.remove('flipped'); // Ensure card is not flipped when loading new question
+            flipButton.classList.add('hidden'); // Hide flip button initially
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.textContent = option;
+                button.dataset.index = index; // Store original index of the option
+                button.addEventListener('click', () => selectOption(button, option));
+                optionsContainer.appendChild(button);
+
+                // If user has already answered this question, show their selection
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    if (userAnswers[currentQuestionIndex] === option) {
+                        button.classList.add('selected');
+                    }
+                    // If card was flipped, show correct/incorrect styling
+                    if (quizCard.classList.contains('flipped')) {
+                        if (option === currentQuestion.answer) {
+                            button.classList.add('correct');
+                        } else if (userAnswers[currentQuestionIndex] === option) {
+                            button.classList.add('incorrect');
+                        }
+                    }
+                }
+            });
+
+            updateNavigationButtons();
+            // If the card was previously flipped, show the flip button and its state
+            if (userAnswers[currentQuestionIndex] !== null && quizCard.classList.contains('flipped')) {
+                flipButton.classList.remove('hidden');
+            } else {
+                flipButton.classList.add('hidden');
+            }
+        }
+
+        function selectOption(selectedButton, selectedOption) {
+            // Only allow selection if the card is not flipped
+            if (quizCard.classList.contains('flipped')) {
+                return;
+            }
+
+            // Remove 'selected' class from all options
+            Array.from(optionsContainer.children).forEach(button => {
+                button.classList.remove('selected');
+            });
+
+            // Add 'selected' class to the clicked button
+            selectedButton.classList.add('selected');
+            userAnswers[currentQuestionIndex] = selectedOption;
+            flipButton.classList.remove('hidden'); // Show flip button after selection
+        }
+
+        flipButton.addEventListener('click', () => {
+            if (userAnswers[currentQuestionIndex] === null) {
+                // Use a custom message box instead of alert()
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #e53e3e;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                    text-align: center;
+                `;
+                messageBox.innerHTML = `
+                    <p>Please select an option before flipping the card.</p>
+                    <button style="background-color: #a0aec0; color: #1a202c; padding: 8px 15px; border-radius: 5px; margin-top: 15px; cursor: pointer; border: none;">OK</button>
+                `;
+                document.body.appendChild(messageBox);
+                messageBox.querySelector('button').addEventListener('click', () => {
+                    document.body.removeChild(messageBox);
+                });
+                return;
+            }
+
+            quizCard.classList.toggle('flipped');
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            correctAnswerTextElem.textContent = `Answer: ${currentQuestion.answer}`;
+            explanationTextElem.textContent = `Explanation: ${currentQuestion.explanation}`;
+
+            // Apply styling based on correctness
+            Array.from(optionsContainer.children).forEach(button => {
+                if (button.textContent === currentQuestion.answer) {
+                    button.classList.add('correct');
+                } else if (button.classList.contains('selected')) {
+                    button.classList.add('incorrect');
+                }
+            });
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        prevButton.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+
+        function updateNavigationButtons() {
+            prevButton.classList.toggle('hidden', currentQuestionIndex === 0);
+            nextButton.textContent = currentQuestionIndex === quizData.length - 1 ? 'Finish Quiz' : 'Next';
+        }
+
+        function showResults() {
+            correctAnswersCount = 0;
+            incorrectAnswersCount = 0;
+
+            quizData.forEach((q, index) => {
+                if (userAnswers[index] === q.answer) {
+                    correctAnswersCount++;
+                } else if (userAnswers[index] !== null) { // Only count as incorrect if an answer was selected
+                    incorrectAnswersCount++;
+                }
+            });
+
+            const totalQuestions = quizData.length;
+            const percentage = (correctAnswersCount / totalQuestions) * 100;
+
+            correctCountElem.textContent = correctAnswersCount;
+            incorrectCountElem.textContent = incorrectAnswersCount;
+            percentageScoreElem.textContent = `${percentage.toFixed(2)}%`;
+
+            quizSection.classList.add('hidden');
+            resultSection.classList.remove('hidden');
+        }
+
+        restartButton.addEventListener('click', () => {
+            currentQuestionIndex = 0;
+            correctAnswersCount = 0;
+            incorrectAnswersCount = 0;
+            userAnswers.fill(null);
+            quizCard.classList.remove('flipped');
+            resultSection.classList.add('hidden');
+            quizSection.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        // Initial load
+        loadQuestion();
+    </script>
+</body>
+</html>
